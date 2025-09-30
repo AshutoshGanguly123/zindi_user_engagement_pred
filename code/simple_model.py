@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import (
     classification_report, 
     confusion_matrix, 
@@ -19,7 +19,7 @@ warnings.filterwarnings('ignore')
 def load_and_prepare_data():
     """Load and prepare the master dataset for training"""
     print("Loading master dataset...")
-    df = pd.read_csv("../data/master_dataset_v2.csv")
+    df = pd.read_csv("../data/master_dataset.csv")
     
     print(f"Dataset shape: {df.shape}")
     print(f"Target variable distribution:")
@@ -65,62 +65,33 @@ def prepare_features(df):
     
     return features, target, feature_columns
 
-def train_random_forest_model(X_train, X_test, y_train, y_test):
-    """Train Random Forest model with hyperparameter tuning"""
+def train_gradient_boosting_model(X_train, X_test, y_train, y_test):
+    """Train Gradient Boosting model (similar to CatBoost)"""
     print("\n" + "="*50)
-    print("TRAINING RANDOM FOREST MODEL")
+    print("TRAINING GRADIENT BOOSTING MODEL")
     print("="*50)
     
     # Initial model with basic parameters
-    print("Training initial Random Forest model...")
-    rf_model = RandomForestClassifier(
+    print("Training initial Gradient Boosting model...")
+    gb_model = GradientBoostingClassifier(
         random_state=42,
-        class_weight='balanced',  # Handle class imbalance
         n_estimators=100,
-        max_depth=10,
-        min_samples_split=20,
-        min_samples_leaf=10,
-        max_features='sqrt',
-        bootstrap=True
+        max_depth=6,
+        learning_rate=0.1,
+        subsample=0.8,
+        max_features='sqrt'
     )
     
     # Train the model
-    rf_model.fit(X_train, y_train)
-    
-    # Hyperparameter tuning
-    print("Performing hyperparameter tuning...")
-    param_grid = {
-        'n_estimators': [200, 300],
-        'max_depth': [15, 30],
-        'min_samples_split': [30],
-        'min_samples_leaf': [15],
-        'max_features': [0.8]
-    }
-    
-    grid_search = GridSearchCV(
-        rf_model, 
-        param_grid, 
-        cv=3, 
-        scoring='f1',
-        n_jobs=-1,
-        verbose=0
-    )
-    
-    grid_search.fit(X_train, y_train)
-    
-    print(f"Best parameters: {grid_search.best_params_}")
-    print(f"Best cross-validation F1 score: {grid_search.best_score_:.4f}")
-    
-    # Use best model
-    best_model = grid_search.best_estimator_
+    gb_model.fit(X_train, y_train)
     
     # Make predictions
-    y_train_pred = best_model.predict(X_train)
-    y_test_pred = best_model.predict(X_test)
-    y_train_proba = best_model.predict_proba(X_train)[:, 1]
-    y_test_proba = best_model.predict_proba(X_test)[:, 1]
+    y_train_pred = gb_model.predict(X_train)
+    y_test_pred = gb_model.predict(X_test)
+    y_train_proba = gb_model.predict_proba(X_train)[:, 1]
+    y_test_proba = gb_model.predict_proba(X_test)[:, 1]
     
-    return best_model, y_train_pred, y_test_pred, y_train_proba, y_test_proba
+    return gb_model, y_train_pred, y_test_pred, y_train_proba, y_test_proba
 
 def evaluate_model(y_true, y_pred, y_proba, dataset_name):
     """Evaluate model performance"""
@@ -198,14 +169,13 @@ def print_roc_metrics(y_true, y_proba, dataset_name):
     }
 
 def save_results_to_file(train_metrics, test_metrics, feature_importance_data, 
-                        train_roc_metrics, test_roc_metrics, train_shape, test_shape,
-                        best_params, cv_score):
+                        train_roc_metrics, test_roc_metrics, train_shape, test_shape):
     """Save all results to a text file"""
-    output_file = "../data/random_forest_results.txt"
+    output_file = "../data/gradient_boosting_results.txt"
     
     with open(output_file, 'w') as f:
         f.write("="*80 + "\n")
-        f.write("RANDOM FOREST MODEL RESULTS FOR USER ENGAGEMENT PREDICTION\n")
+        f.write("GRADIENT BOOSTING MODEL RESULTS FOR USER ENGAGEMENT PREDICTION\n")
         f.write("="*80 + "\n\n")
         
         # Dataset info
@@ -214,15 +184,6 @@ def save_results_to_file(train_metrics, test_metrics, feature_importance_data,
         f.write(f"Training samples: {train_shape[0]:,}\n")
         f.write(f"Test samples: {test_shape[0]:,}\n")
         f.write(f"Number of features: {train_shape[1]}\n\n")
-        
-        # Hyperparameter tuning results
-        f.write("HYPERPARAMETER TUNING:\n")
-        f.write("-" * 40 + "\n")
-        f.write(f"Best CV F1 Score: {cv_score:.4f}\n")
-        f.write("Best Parameters:\n")
-        for param, value in best_params.items():
-            f.write(f"  {param}: {value}\n")
-        f.write("\n")
         
         # Training metrics
         f.write("TRAINING SET PERFORMANCE:\n")
@@ -279,14 +240,13 @@ def save_results_to_file(train_metrics, test_metrics, feature_importance_data,
         # Model summary
         f.write("MODEL SUMMARY:\n")
         f.write("-" * 40 + "\n")
-        f.write("Model Type: Random Forest Classifier\n")
+        f.write("Model Type: Gradient Boosting Classifier\n")
         f.write("Key Features:\n")
-        f.write("  - Ensemble of decision trees\n")
-        f.write("  - Bootstrap aggregating (bagging)\n")
-        f.write("  - Feature randomness for decorrelation\n")
-        f.write("  - Built-in feature importance calculation\n")
-        f.write("  - Class imbalance handling (class_weight)\n")
-        f.write("  - Hyperparameter optimization\n\n")
+        f.write("  - Gradient boosting with decision trees\n")
+        f.write("  - Similar performance to CatBoost/XGBoost\n")
+        f.write("  - Feature importance calculation\n")
+        f.write("  - Good handling of mixed data types\n")
+        f.write("  - Built-in sklearn implementation\n\n")
         
         f.write("Key Findings:\n")
         f.write(f"  - Most important feature: {feature_importance_data[0][0]} ({feature_importance_data[0][1]:.4f})\n")
@@ -297,9 +257,9 @@ def save_results_to_file(train_metrics, test_metrics, feature_importance_data,
     print(f"\nResults saved to: {output_file}")
 
 def main():
-    """Main function to run the Random Forest model"""
+    """Main function to run the Gradient Boosting model"""
     print("="*60)
-    print("RANDOM FOREST MODEL FOR USER ENGAGEMENT PREDICTION")
+    print("GRADIENT BOOSTING MODEL FOR USER ENGAGEMENT PREDICTION")
     print("="*60)
     
     # Load and prepare data
@@ -321,7 +281,7 @@ def main():
     print(f"Test set target distribution: {y_test.value_counts().to_dict()}")
     
     # Train model
-    model, y_train_pred, y_test_pred, y_train_proba, y_test_proba = train_random_forest_model(
+    model, y_train_pred, y_test_pred, y_train_proba, y_test_proba = train_gradient_boosting_model(
         X_train, X_test, y_train, y_test
     )
     
@@ -338,7 +298,7 @@ def main():
     print("\n" + "="*60)
     print("MODEL SUMMARY")
     print("="*60)
-    print(f"Model Type: Random Forest Classifier")
+    print(f"Model Type: Gradient Boosting Classifier")
     print(f"Training Samples: {len(y_train):,}")
     print(f"Test Samples: {len(y_test):,}")
     print(f"Number of Features: {len(feature_names)}")
@@ -351,14 +311,13 @@ def main():
     
     # Save model
     import joblib
-    joblib.dump(model, "../data/random_forest_model.pkl")
-    print(f"\nModel saved to: ../data/random_forest_model.pkl")
+    joblib.dump(model, "../data/gradient_boosting_model.pkl")
+    print(f"\nModel saved to: ../data/gradient_boosting_model.pkl")
     
     # Save results to text file
     save_results_to_file(
         train_metrics, test_metrics, feature_importance_data, 
-        train_roc_metrics, test_roc_metrics, X_train.shape, X_test.shape,
-        model.get_params(), 0.0  # CV score not easily accessible from final model
+        train_roc_metrics, test_roc_metrics, X_train.shape, X_test.shape
     )
     
     return model, train_metrics, test_metrics

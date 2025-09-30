@@ -21,7 +21,7 @@ warnings.filterwarnings('ignore')
 def load_and_prepare_data():
     """Load and prepare the master dataset for training"""
     print("Loading master dataset...")
-    df = pd.read_csv("../data/master_dataset.csv")
+    df = pd.read_csv("../data/master_dataset_v2.csv")
     
     print(f"Dataset shape: {df.shape}")
     print(f"Target variable distribution:")

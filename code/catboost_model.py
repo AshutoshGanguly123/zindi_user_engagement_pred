@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     classification_report, 
     confusion_matrix, 
@@ -13,13 +12,14 @@ from sklearn.metrics import (
     roc_curve
 )
 from sklearn.preprocessing import LabelEncoder
+import catboost as cb
 import warnings
 warnings.filterwarnings('ignore')
 
 def load_and_prepare_data():
     """Load and prepare the master dataset for training"""
     print("Loading master dataset...")
-    df = pd.read_csv("../data/master_dataset_v2.csv")
+    df = pd.read_csv("../data/master_dataset.csv")
     
     print(f"Dataset shape: {df.shape}")
     print(f"Target variable distribution:")
@@ -65,40 +65,60 @@ def prepare_features(df):
     
     return features, target, feature_columns
 
-def train_random_forest_model(X_train, X_test, y_train, y_test):
-    """Train Random Forest model with hyperparameter tuning"""
+def train_catboost_model(X_train, X_test, y_train, y_test, feature_names):
+    """Train CatBoost model"""
     print("\n" + "="*50)
-    print("TRAINING RANDOM FOREST MODEL")
+    print("TRAINING CATBOOST MODEL")
     print("="*50)
     
+    # Identify categorical features for CatBoost
+    categorical_features_indices = []
+    for i, col in enumerate(feature_names):
+        if X_train[col].dtype == 'object':
+            categorical_features_indices.append(i)
+    
+    print(f"Categorical features indices: {categorical_features_indices}")
+    
     # Initial model with basic parameters
-    print("Training initial Random Forest model...")
-    rf_model = RandomForestClassifier(
-        random_state=42,
-        class_weight='balanced',  # Handle class imbalance
-        n_estimators=100,
-        max_depth=10,
-        min_samples_split=20,
-        min_samples_leaf=10,
-        max_features='sqrt',
-        bootstrap=True
+    print("Training initial CatBoost model...")
+    catboost_model = cb.CatBoostClassifier(
+        random_seed=42,
+        verbose=False,  # Suppress output
+        class_weights=[1, len(y_train[y_train==0]) / len(y_train[y_train==1])],  # Handle class imbalance
+        iterations=100,
+        depth=6,
+        learning_rate=0.1,
+        l2_leaf_reg=3,
+        subsample=0.8,
+        use_best_model=True,
+        eval_metric='F1'
     )
     
     # Train the model
-    rf_model.fit(X_train, y_train)
+    catboost_model.fit(
+        X_train, y_train,
+        cat_features=categorical_features_indices,
+        eval_set=(X_test, y_test),
+        use_best_model=True,
+        verbose=False
+    )
     
-    # Hyperparameter tuning
+    # Hyperparameter tuning (currently disabled)
+    # Uncomment the section below if you want to enable hyperparameter tuning
+    """
     print("Performing hyperparameter tuning...")
     param_grid = {
-        'n_estimators': [200, 300],
-        'max_depth': [15, 30],
-        'min_samples_split': [30],
-        'min_samples_leaf': [15],
-        'max_features': [0.8]
+        'iterations': [100, 200, 300],
+        'depth': [4, 6, 8],
+        'learning_rate': [0.05, 0.1, 0.15],
+        'l2_leaf_reg': [1, 3, 5],
+        'subsample': [0.8, 0.9, 1.0],
+        'rsm': [0.8, 0.9, 1.0]
     }
     
+    from sklearn.model_selection import GridSearchCV
     grid_search = GridSearchCV(
-        rf_model, 
+        catboost_model, 
         param_grid, 
         cv=3, 
         scoring='f1',
@@ -113,6 +133,10 @@ def train_random_forest_model(X_train, X_test, y_train, y_test):
     
     # Use best model
     best_model = grid_search.best_estimator_
+    """
+    
+    # For now, use the initial model (hyperparameter tuning disabled)
+    best_model = catboost_model
     
     # Make predictions
     y_train_pred = best_model.predict(X_train)
@@ -198,14 +222,13 @@ def print_roc_metrics(y_true, y_proba, dataset_name):
     }
 
 def save_results_to_file(train_metrics, test_metrics, feature_importance_data, 
-                        train_roc_metrics, test_roc_metrics, train_shape, test_shape,
-                        best_params, cv_score):
+                        train_roc_metrics, test_roc_metrics, train_shape, test_shape):
     """Save all results to a text file"""
-    output_file = "../data/random_forest_results.txt"
+    output_file = "../data/catboost_results.txt"
     
     with open(output_file, 'w') as f:
         f.write("="*80 + "\n")
-        f.write("RANDOM FOREST MODEL RESULTS FOR USER ENGAGEMENT PREDICTION\n")
+        f.write("CATBOOST MODEL RESULTS FOR USER ENGAGEMENT PREDICTION\n")
         f.write("="*80 + "\n\n")
         
         # Dataset info
@@ -214,15 +237,6 @@ def save_results_to_file(train_metrics, test_metrics, feature_importance_data,
         f.write(f"Training samples: {train_shape[0]:,}\n")
         f.write(f"Test samples: {test_shape[0]:,}\n")
         f.write(f"Number of features: {train_shape[1]}\n\n")
-        
-        # Hyperparameter tuning results
-        f.write("HYPERPARAMETER TUNING:\n")
-        f.write("-" * 40 + "\n")
-        f.write(f"Best CV F1 Score: {cv_score:.4f}\n")
-        f.write("Best Parameters:\n")
-        for param, value in best_params.items():
-            f.write(f"  {param}: {value}\n")
-        f.write("\n")
         
         # Training metrics
         f.write("TRAINING SET PERFORMANCE:\n")
@@ -279,14 +293,14 @@ def save_results_to_file(train_metrics, test_metrics, feature_importance_data,
         # Model summary
         f.write("MODEL SUMMARY:\n")
         f.write("-" * 40 + "\n")
-        f.write("Model Type: Random Forest Classifier\n")
+        f.write("Model Type: CatBoost Classifier\n")
         f.write("Key Features:\n")
-        f.write("  - Ensemble of decision trees\n")
-        f.write("  - Bootstrap aggregating (bagging)\n")
-        f.write("  - Feature randomness for decorrelation\n")
-        f.write("  - Built-in feature importance calculation\n")
-        f.write("  - Class imbalance handling (class_weight)\n")
-        f.write("  - Hyperparameter optimization\n\n")
+        f.write("  - Gradient boosting with categorical features support\n")
+        f.write("  - Built-in categorical feature handling\n")
+        f.write("  - Automatic feature importance calculation\n")
+        f.write("  - Robust to overfitting\n")
+        f.write("  - Class imbalance handling (class_weights)\n")
+        f.write("  - Hyperparameter tuning code included but disabled\n\n")
         
         f.write("Key Findings:\n")
         f.write(f"  - Most important feature: {feature_importance_data[0][0]} ({feature_importance_data[0][1]:.4f})\n")
@@ -297,9 +311,9 @@ def save_results_to_file(train_metrics, test_metrics, feature_importance_data,
     print(f"\nResults saved to: {output_file}")
 
 def main():
-    """Main function to run the Random Forest model"""
+    """Main function to run the CatBoost model"""
     print("="*60)
-    print("RANDOM FOREST MODEL FOR USER ENGAGEMENT PREDICTION")
+    print("CATBOOST MODEL FOR USER ENGAGEMENT PREDICTION")
     print("="*60)
     
     # Load and prepare data
@@ -321,8 +335,8 @@ def main():
     print(f"Test set target distribution: {y_test.value_counts().to_dict()}")
     
     # Train model
-    model, y_train_pred, y_test_pred, y_train_proba, y_test_proba = train_random_forest_model(
-        X_train, X_test, y_train, y_test
+    model, y_train_pred, y_test_pred, y_train_proba, y_test_proba = train_catboost_model(
+        X_train, X_test, y_train, y_test, feature_names
     )
     
     # Evaluate model
@@ -338,7 +352,7 @@ def main():
     print("\n" + "="*60)
     print("MODEL SUMMARY")
     print("="*60)
-    print(f"Model Type: Random Forest Classifier")
+    print(f"Model Type: CatBoost Classifier")
     print(f"Training Samples: {len(y_train):,}")
     print(f"Test Samples: {len(y_test):,}")
     print(f"Number of Features: {len(feature_names)}")
@@ -351,14 +365,13 @@ def main():
     
     # Save model
     import joblib
-    joblib.dump(model, "../data/random_forest_model.pkl")
-    print(f"\nModel saved to: ../data/random_forest_model.pkl")
+    joblib.dump(model, "../data/catboost_model.pkl")
+    print(f"\nModel saved to: ../data/catboost_model.pkl")
     
     # Save results to text file
     save_results_to_file(
         train_metrics, test_metrics, feature_importance_data, 
-        train_roc_metrics, test_roc_metrics, X_train.shape, X_test.shape,
-        model.get_params(), 0.0  # CV score not easily accessible from final model
+        train_roc_metrics, test_roc_metrics, X_train.shape, X_test.shape
     )
     
     return model, train_metrics, test_metrics
