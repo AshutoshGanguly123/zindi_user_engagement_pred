@@ -1,0 +1,108 @@
+================================================================================
+RANDOM FOREST MODEL RESULTS FOR USER ENGAGEMENT PREDICTION
+================================================================================
+
+DATASET INFORMATION:
+----------------------------------------
+Training samples: 9,930
+Test samples: 2,483
+Number of features: 23
+
+HYPERPARAMETER TUNING:
+----------------------------------------
+Best CV F1 Score: 0.0000
+Best Parameters:
+  bootstrap: True
+  ccp_alpha: 0.0
+  class_weight: balanced
+  criterion: gini
+  max_depth: 15
+  max_features: 0.8
+  max_leaf_nodes: None
+  max_samples: None
+  min_impurity_decrease: 0.0
+  min_samples_leaf: 15
+  min_samples_split: 30
+  min_weight_fraction_leaf: 0.0
+  monotonic_cst: None
+  n_estimators: 200
+  n_jobs: None
+  oob_score: False
+  random_state: 42
+  verbose: 0
+  warm_start: False
+
+TRAINING SET PERFORMANCE:
+----------------------------------------
+Accuracy:  0.8183
+Precision: 0.3275
+Recall:    0.9037
+F1 Score:  0.4807
+AUC-ROC:   0.9361
+Confusion Matrix:
+  True Negatives:  7,291
+  False Positives: 1,715
+  False Negatives: 89
+  True Positives:  835
+
+TEST SET PERFORMANCE:
+----------------------------------------
+Accuracy:  0.7922
+Precision: 0.2770
+Recall:    0.7662
+F1 Score:  0.4069
+AUC-ROC:   0.8726
+Confusion Matrix:
+  True Negatives:  1,790
+  False Positives: 462
+  False Negatives: 54
+  True Positives:  177
+
+FEATURE IMPORTANCE (Top 15):
+----------------------------------------
+ 1. Created At Month              : 0.4720
+ 2. fm_total_activities           : 0.1456
+ 3. fm_act_Joined_Competition     : 0.1009
+ 4. Countries_ID                  : 0.0585
+ 5. fm_act_Viewed_All_Discussions : 0.0411
+ 6. fm_act_Downloaded_Competition_Datafile: 0.0386
+ 7. fm_act_Viewed_All_Competitions: 0.0279
+ 8. fm_comp_participations        : 0.0207
+ 9. fm_act_Viewed_All_Learning_Pages: 0.0201
+10. fm_act_Updated_Profile        : 0.0198
+11. FeatureY                      : 0.0161
+12. fm_act_badge_OCZE             : 0.0113
+13. fm_act_$identify              : 0.0061
+14. fm_act_Signed_Up              : 0.0037
+15. fm_act_Confirmed_Email        : 0.0037
+
+ROC CURVE METRICS:
+----------------------------------------
+Training Set:
+  AUC-ROC: 0.9361
+  Optimal Threshold: 0.4561
+  Optimal TPR (Recall): 0.9470
+  Optimal FPR: 0.2247
+
+Test Set:
+  AUC-ROC: 0.8726
+  Optimal Threshold: 0.3085
+  Optimal TPR (Recall): 0.9264
+  Optimal FPR: 0.3228
+
+MODEL SUMMARY:
+----------------------------------------
+Model Type: Random Forest Classifier
+Key Features:
+  - Ensemble of decision trees
+  - Bootstrap aggregating (bagging)
+  - Feature randomness for decorrelation
+  - Built-in feature importance calculation
+  - Class imbalance handling (class_weight)
+  - Hyperparameter optimization
+
+Key Findings:
+  - Most important feature: Created At Month (0.4720)
+  - Test F1 Score: 0.4069
+  - Test AUC-ROC: 0.8726
+  - Model shows excellent discriminative ability

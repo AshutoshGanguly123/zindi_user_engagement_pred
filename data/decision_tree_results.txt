@@ -1,0 +1,83 @@
+================================================================================
+DECISION TREE MODEL RESULTS FOR USER ENGAGEMENT PREDICTION
+================================================================================
+
+DATASET INFORMATION:
+----------------------------------------
+Training samples: 9,930
+Test samples: 2,483
+Number of features: 23
+
+TRAINING SET PERFORMANCE:
+----------------------------------------
+Accuracy:  0.8079
+Precision: 0.3102
+Recall:    0.8701
+F1 Score:  0.4573
+AUC-ROC:   0.9130
+Confusion Matrix:
+  True Negatives:  7,218
+  False Positives: 1,788
+  False Negatives: 120
+  True Positives:  804
+
+TEST SET PERFORMANCE:
+----------------------------------------
+Accuracy:  0.7789
+Precision: 0.2627
+Recall:    0.7619
+F1 Score:  0.3907
+AUC-ROC:   0.8270
+Confusion Matrix:
+  True Negatives:  1,758
+  False Positives: 494
+  False Negatives: 55
+  True Positives:  176
+
+FEATURE IMPORTANCE (Top 15):
+----------------------------------------
+ 1. Created At Month              : 0.5731
+ 2. fm_total_activities           : 0.2116
+ 3. fm_act_Viewed_All_Discussions : 0.0449
+ 4. Countries_ID                  : 0.0356
+ 5. fm_act_Viewed_All_Learning_Pages: 0.0216
+ 6. fm_comp_participations        : 0.0192
+ 7. fm_act_Viewed_All_Competitions: 0.0187
+ 8. fm_act_Updated_Profile        : 0.0154
+ 9. fm_act_Downloaded_Competition_Datafile: 0.0150
+10. fm_act_Joined_Competition     : 0.0134
+11. FeatureY                      : 0.0117
+12. fm_act_$identify              : 0.0082
+13. fm_act_$create_alias          : 0.0046
+14. fm_act_Confirmed_Email        : 0.0023
+15. fm_discussions                : 0.0023
+
+ROC CURVE METRICS:
+----------------------------------------
+Training Set:
+  AUC-ROC: 0.9130
+  Optimal Threshold: 0.5199
+  Optimal TPR (Recall): 0.8701
+  Optimal FPR: 0.1985
+
+Test Set:
+  AUC-ROC: 0.8270
+  Optimal Threshold: 0.4482
+  Optimal TPR (Recall): 0.8571
+  Optimal FPR: 0.2966
+
+MODEL SUMMARY:
+----------------------------------------
+Model Type: Decision Tree Classifier
+Key Parameters:
+  - max_depth: 10
+  - min_samples_split: 20
+  - min_samples_leaf: 10
+  - class_weight: balanced
+  - random_state: 42
+
+Key Findings:
+  - Most important feature: Created At Month (0.5731)
+  - Test F1 Score: 0.3907
+  - Test AUC-ROC: 0.8270
+  - Model shows good discriminative ability

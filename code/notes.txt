@@ -1,0 +1,10 @@
+blogs.csv:
+    maybe they are a frequent blogger
+comments.csv:
+    maybe they a frequent commenter
+competition_participation.csv
+    maybe they participate a lot
+discussion.csv
+    same
+user_activity.csv , users.csv
+    some activity pattern.
