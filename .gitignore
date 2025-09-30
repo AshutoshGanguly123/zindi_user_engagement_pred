@@ -46,6 +46,7 @@ venv.bak/
 
 # Data files (optional - remove if you want to include data)
 *.csv
+!data/master_dataset.csv
 *.json
 *.parquet
 
